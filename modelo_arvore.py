@@ -24,13 +24,13 @@ def plot(model):
     height = max(5, depth * 2)
 
     fig, ax = plt.subplots(figsize=(max(12, depth * 4), height))
-    fig.suptitle("Decision Tree", fontsize=12)
+    fig.suptitle("Árvore de Decisão", fontsize=12)
 
     plot_tree(
         model,
         ax=ax,
         feature_names=FEATURE_LABELS,
-        class_names=["Died", "Survived"],
+        class_names=["Morreu", "Sobreviveu"],
         filled=True,
         rounded=True,
         impurity=False,
