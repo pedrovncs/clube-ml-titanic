@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from sklearn.model_selection import train_test_split
 import data
 import modelo_reg_log
 import modelo_arvore
@@ -87,8 +88,12 @@ INFO = {
         "Semente Aleatória (random_state)",
         "Garante que os resultados sejam reproduzíveis.\n\n"
         "Fixar este número faz com que o modelo dê sempre o mesmo resultado matemático se os dados forem os mesmos."
+    ),
+    "test_size": (
+        "Tamanho do Teste (%)",
+        "A percentagem do dataset que será guardada exclusivamente para avaliar o modelo.\n\n"
+        "Por exemplo, se escolher 20%, o modelo vai treinar com 80% dos passageiros históricos e será testado com os 20% restantes que ele nunca viu antes. Isso permite calcular uma acurácia real!"
     )
-    
 }
 
 PORT_IMAGES = {
@@ -103,7 +108,6 @@ CLASS_IMAGES = {
     3: "./images/titanic_class3.png",
 }
 
-
 def load_image(path, max_w=600, max_h=400):
     """Load a local image and return a Tkinter PhotoImage scaled to fit."""
     try:
@@ -113,7 +117,6 @@ def load_image(path, max_w=600, max_h=400):
         return ImageTk.PhotoImage(img)
     except Exception:
         return None
-
 
 class App(tk.Tk):
     def __init__(self):
@@ -160,7 +163,6 @@ class App(tk.Tk):
         e.grid(row=0, column=1, sticky="w", **pad)
         e.bind("<FocusIn>", lambda _: self._show_info("name"))
 
-        # Class
         label("Classe da cabine", 1)
         self.pclass_var = tk.IntVar(value=3)
         cb_class = ttk.Combobox(p, textvariable=self.pclass_var,
@@ -280,7 +282,6 @@ class App(tk.Tk):
             w.destroy()
         pad = dict(padx=6, pady=3)
         
-        #random_state
         tk.Label(self.params_frame, text="random_state").grid(row=0, column=0, sticky="w", **pad)
         self.model_rs_var = tk.IntVar(value=42)
         sb_rs = tk.Spinbox(self.params_frame, textvariable=self.model_rs_var,
@@ -288,55 +289,60 @@ class App(tk.Tk):
         sb_rs.grid(row=0, column=1, sticky="w", **pad)
         sb_rs.bind("<FocusIn>", lambda _: self._show_info("random_state"))
         
+        tk.Label(self.params_frame, text="Tamanho do Teste (%)").grid(row=1, column=0, sticky="w", **pad)
+        self.test_size_var = tk.IntVar(value=20)
+        sb_test = tk.Spinbox(self.params_frame, textvariable=self.test_size_var,
+                   from_=5, to=90, increment=5, width=8)
+        sb_test.grid(row=1, column=1, sticky="w", **pad)
+        sb_test.bind("<FocusIn>", lambda _: self._show_info("test_size"))
+        
         if self.model_var.get() == "Regressão Logística":
-            # c
-            tk.Label(self.params_frame, text="C").grid(row=1, column=0, sticky="w", **pad)
+            tk.Label(self.params_frame, text="C (regularização)").grid(row=2, column=0, sticky="w", **pad)
             self.lr_C_var = tk.DoubleVar(value=1.0)
             sb_c = tk.Spinbox(self.params_frame, textvariable=self.lr_C_var,
-                       from_=0.01, to=10.0, increment=0.1, format="%.2f", width=8)
-            sb_c.grid(row=1, column=1, sticky="w", **pad)
+                       from_=0.01, to=10.0, increment=0.1,
+                       format="%.2f", width=8)
+            sb_c.grid(row=2, column=1, sticky="w", **pad)
             sb_c.bind("<FocusIn>", lambda _: self._show_info("lr_C"))
 
-            # max_iterations
-            tk.Label(self.params_frame, text="max_iterations").grid(row=2, column=0, sticky="w", **pad)
+            tk.Label(self.params_frame, text="max_iterations").grid(row=3, column=0, sticky="w", **pad)
             self.lr_iter_var = tk.IntVar(value=200)
             sb_iter = tk.Spinbox(self.params_frame, textvariable=self.lr_iter_var,
-                       from_=50, to=2000, increment=50, width=8)
-            sb_iter.grid(row=2, column=1, sticky="w", **pad)
+                       from_=50, to=2000, increment=50,
+                       width=8)
+            sb_iter.grid(row=3, column=1, sticky="w", **pad)
             sb_iter.bind("<FocusIn>", lambda _: self._show_info("lr_iter"))
 
-            # solver
-            tk.Label(self.params_frame, text="solver").grid(row=3, column=0, sticky="w", **pad)
+            tk.Label(self.params_frame, text="solver").grid(row=4, column=0, sticky="w", **pad)
             self.lr_solver_var = tk.StringVar(value="lbfgs")
             cb_solver = ttk.Combobox(self.params_frame, textvariable=self.lr_solver_var,
-                         values=["lbfgs", "saga", "liblinear"], state="readonly", width=10)
-            cb_solver.grid(row=3, column=1, sticky="w", **pad)
+                         values=["lbfgs", "saga", "liblinear"],
+                         state="readonly", width=10)
+            cb_solver.grid(row=4, column=1, sticky="w", **pad)
             cb_solver.bind("<<ComboboxSelected>>", lambda _: self._show_info("lr_solver"))
             cb_solver.bind("<FocusIn>", lambda _: self._show_info("lr_solver"))
             
         else:
-            # max_depth
-            tk.Label(self.params_frame, text="max_depth").grid(row=1, column=0, sticky="w", **pad)
+            tk.Label(self.params_frame, text="max_depth").grid(row=2, column=0, sticky="w", **pad)
             self.dt_depth_var = tk.IntVar(value=3)
             sb_depth = tk.Spinbox(self.params_frame, textvariable=self.dt_depth_var,
                        from_=1, to=10, width=6)
-            sb_depth.grid(row=1, column=1, sticky="w", **pad)
+            sb_depth.grid(row=2, column=1, sticky="w", **pad)
             sb_depth.bind("<FocusIn>", lambda _: self._show_info("max_depth"))
 
-            # min_leaf
-            tk.Label(self.params_frame, text="min_sample_leafs").grid(row=2, column=0, sticky="w", **pad)
+            tk.Label(self.params_frame, text="min_sample_leafs").grid(row=3, column=0, sticky="w", **pad)
             self.dt_leaf_var = tk.IntVar(value=5)
             sb_leaf = tk.Spinbox(self.params_frame, textvariable=self.dt_leaf_var,
                        from_=1, to=40, width=6)
-            sb_leaf.grid(row=2, column=1, sticky="w", **pad)
+            sb_leaf.grid(row=3, column=1, sticky="w", **pad)
             sb_leaf.bind("<FocusIn>", lambda _: self._show_info("min_leaf"))
 
-            # criterion 
-            tk.Label(self.params_frame, text="criterion").grid(row=3, column=0, sticky="w", **pad)
+            tk.Label(self.params_frame, text="criterion").grid(row=4, column=0, sticky="w", **pad)
             self.dt_crit_var = tk.StringVar(value="gini")
             cb_crit = ttk.Combobox(self.params_frame, textvariable=self.dt_crit_var,
-                         values=["gini", "entropy"], state="readonly", width=10)
-            cb_crit.grid(row=3, column=1, sticky="w", **pad)
+                         values=["gini", "entropy"],
+                         state="readonly", width=10)
+            cb_crit.grid(row=4, column=1, sticky="w", **pad)
             cb_crit.bind("<<ComboboxSelected>>", lambda _: self._show_info("dt_crit"))
             cb_crit.bind("<FocusIn>", lambda _: self._show_info("dt_crit"))
 
@@ -344,6 +350,9 @@ class App(tk.Tk):
         name     = self.name_var.get().strip() or "O passageiro"
         sex_male = 1 if self.sex_var.get() == "Male" else 0
         embarked = self.embarked_var.get()[0] 
+
+        rs = self.model_rs_var.get()
+        ts = self.test_size_var.get() / 100.0 
 
         passenger = data.build_passenger(
             self.pclass_var.get(),
@@ -354,25 +363,35 @@ class App(tk.Tk):
         )
 
         if self.model_var.get() == "Regressão Logística":
+            X_train, X_test, y_train, y_test = train_test_split(
+                self.X_scaled, self.y, test_size=ts, random_state=rs
+            )
+        
             p_scaled = self.scaler.transform(passenger)
+        
             pred, proba, trained = modelo_reg_log.train_and_predict(
-                self.X_scaled, self.y, p_scaled,
+                X_train, y_train, p_scaled,
                 C=self.lr_C_var.get(),
                 max_iter=self.lr_iter_var.get(),
                 solver=self.lr_solver_var.get(),
-                random_state=self.lr_rs_var.get(),
+                random_state=rs,
             )
-            acc = trained.score(self.X_scaled, self.y)
+            acc = trained.score(X_test, y_test)
             modelo_reg_log.plot(trained, p_scaled, proba)
+            
         else:
+            X_train, X_test, y_train, y_test = train_test_split(
+                self.X, self.y, test_size=ts, random_state=rs
+            )
+            
             pred, proba, trained = modelo_arvore.train_and_predict(
-                self.X, self.y, passenger,
+                X_train, y_train, passenger,
                 max_depth=self.dt_depth_var.get(),
                 criterion=self.dt_crit_var.get(),
                 min_samples_leaf=self.dt_leaf_var.get(),
-                random_state=self.dt_rs_var.get(), 
+                random_state=rs,
             )
-            acc = trained.score(self.X, self.y)
+            acc = trained.score(X_test, y_test)
             modelo_arvore.plot(trained)
 
         survived = bool(pred)
@@ -384,9 +403,8 @@ class App(tk.Tk):
             self.result_lbl.config(fg="red")
 
         self.detail_lbl.config(
-            text=f"Probabilidade de sobrevivência: {proba*100:.1f}%   |   Acurácia: {acc*100:.1f}%"
+            text=f"Probabilidade de sobrevivência: {proba*100:.1f}%   |   Acurácia Real (Teste): {acc*100:.1f}%"
         )
-
 
 if __name__ == "__main__":
     App().mainloop()
