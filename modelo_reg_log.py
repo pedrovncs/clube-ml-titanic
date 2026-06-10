@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 
 
-FEATURE_LABELS = ["Pclass", "Age", "FamAboard", "Sex_male",
+FEATURE_LABELS = ["Pclass_1", "Pclass_2", "Pclass_3", "Age", "FamAboard", "Sex_male",
                   "Emb_Q", "Emb_S", "Emb_C"]
 
 
