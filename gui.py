@@ -280,75 +280,63 @@ class App(tk.Tk):
             w.destroy()
         pad = dict(padx=6, pady=3)
         
+        #random_state
+        tk.Label(self.params_frame, text="random_state").grid(row=0, column=0, sticky="w", **pad)
+        self.model_rs_var = tk.IntVar(value=42)
+        sb_rs = tk.Spinbox(self.params_frame, textvariable=self.model_rs_var,
+                   from_=0, to=9999, width=8)
+        sb_rs.grid(row=0, column=1, sticky="w", **pad)
+        sb_rs.bind("<FocusIn>", lambda _: self._show_info("random_state"))
+        
         if self.model_var.get() == "Regressão Logística":
-            # --- Random State (Logistic Regression) ---
-            tk.Label(self.params_frame, text="random_state").grid(row=3, column=0, sticky="w", **pad)
-            self.lr_rs_var = tk.IntVar(value=42)
-            sb_lr_rs = tk.Spinbox(self.params_frame, textvariable=self.lr_rs_var,
-                       from_=0, to=9999, width=8)
-            sb_lr_rs.grid(row=3, column=1, sticky="w", **pad)
-            sb_lr_rs.bind("<FocusIn>", lambda _: self._show_info("random_state"))
-            
-            # --- C (Regularização) ---
-            tk.Label(self.params_frame, text="C (regularização)").grid(row=0, column=0, sticky="w", **pad)
+            # c
+            tk.Label(self.params_frame, text="C").grid(row=1, column=0, sticky="w", **pad)
             self.lr_C_var = tk.DoubleVar(value=1.0)
             sb_c = tk.Spinbox(self.params_frame, textvariable=self.lr_C_var,
-                       from_=0.01, to=10.0, increment=0.1,
-                       format="%.2f", width=8)
-            sb_c.grid(row=0, column=1, sticky="w", **pad)
+                       from_=0.01, to=10.0, increment=0.1, format="%.2f", width=8)
+            sb_c.grid(row=1, column=1, sticky="w", **pad)
             sb_c.bind("<FocusIn>", lambda _: self._show_info("lr_C"))
 
-            # --- Max Iterations ---
-            tk.Label(self.params_frame, text="max_iterations").grid(row=1, column=0, sticky="w", **pad)
+            # max_iterations
+            tk.Label(self.params_frame, text="max_iterations").grid(row=2, column=0, sticky="w", **pad)
             self.lr_iter_var = tk.IntVar(value=200)
             sb_iter = tk.Spinbox(self.params_frame, textvariable=self.lr_iter_var,
-                       from_=50, to=2000, increment=50,
-                       width=8)
-            sb_iter.grid(row=1, column=1, sticky="w", **pad)
+                       from_=50, to=2000, increment=50, width=8)
+            sb_iter.grid(row=2, column=1, sticky="w", **pad)
             sb_iter.bind("<FocusIn>", lambda _: self._show_info("lr_iter"))
 
-            # --- Solver ---
-            tk.Label(self.params_frame, text="solver").grid(row=2, column=0, sticky="w", **pad)
+            # solver
+            tk.Label(self.params_frame, text="solver").grid(row=3, column=0, sticky="w", **pad)
             self.lr_solver_var = tk.StringVar(value="lbfgs")
             cb_solver = ttk.Combobox(self.params_frame, textvariable=self.lr_solver_var,
-                         values=["lbfgs", "saga", "liblinear"],
-                         state="readonly", width=10)
-            cb_solver.grid(row=2, column=1, sticky="w", **pad)
+                         values=["lbfgs", "saga", "liblinear"], state="readonly", width=10)
+            cb_solver.grid(row=3, column=1, sticky="w", **pad)
             cb_solver.bind("<<ComboboxSelected>>", lambda _: self._show_info("lr_solver"))
             cb_solver.bind("<FocusIn>", lambda _: self._show_info("lr_solver"))
             
         else:
-            # --- Random State (Decision Tree) ---
-            tk.Label(self.params_frame, text="random_state").grid(row=3, column=0, sticky="w", **pad)
-            self.dt_rs_var = tk.IntVar(value=42)
-            sb_dt_rs = tk.Spinbox(self.params_frame, textvariable=self.dt_rs_var,
-                       from_=0, to=9999, width=6)
-            sb_dt_rs.grid(row=3, column=1, sticky="w", **pad)
-            sb_dt_rs.bind("<FocusIn>", lambda _: self._show_info("random_state"))
-            
-            # --- Max Depth ---
-            tk.Label(self.params_frame, text="max_depth").grid(row=0, column=0, sticky="w", **pad)
+            # max_depth
+            tk.Label(self.params_frame, text="max_depth").grid(row=1, column=0, sticky="w", **pad)
             self.dt_depth_var = tk.IntVar(value=3)
             sb_depth = tk.Spinbox(self.params_frame, textvariable=self.dt_depth_var,
                        from_=1, to=10, width=6)
-            sb_depth.grid(row=0, column=1, sticky="w", **pad)
+            sb_depth.grid(row=1, column=1, sticky="w", **pad)
             sb_depth.bind("<FocusIn>", lambda _: self._show_info("max_depth"))
 
-            # --- Min Samples Leaf ---
-            tk.Label(self.params_frame, text="min_sample_leafs").grid(row=1, column=0, sticky="w", **pad)
+            # min_leaf
+            tk.Label(self.params_frame, text="min_sample_leafs").grid(row=2, column=0, sticky="w", **pad)
             self.dt_leaf_var = tk.IntVar(value=5)
             sb_leaf = tk.Spinbox(self.params_frame, textvariable=self.dt_leaf_var,
                        from_=1, to=40, width=6)
-            sb_leaf.grid(row=1, column=1, sticky="w", **pad)
+            sb_leaf.grid(row=2, column=1, sticky="w", **pad)
             sb_leaf.bind("<FocusIn>", lambda _: self._show_info("min_leaf"))
 
-            # --- Criterion ---
-            tk.Label(self.params_frame, text="criterion").grid(row=2, column=0, sticky="w", **pad)
+            # criterion 
+            tk.Label(self.params_frame, text="criterion").grid(row=3, column=0, sticky="w", **pad)
             self.dt_crit_var = tk.StringVar(value="gini")
             cb_crit = ttk.Combobox(self.params_frame, textvariable=self.dt_crit_var,
-                         values=["gini", "entropy"],
-                         state="readonly", width=10)
-            cb_crit.grid(row=2, column=1, sticky="w", **pad)
+                         values=["gini", "entropy"], state="readonly", width=10)
+            cb_crit.grid(row=3, column=1, sticky="w", **pad)
             cb_crit.bind("<<ComboboxSelected>>", lambda _: self._show_info("dt_crit"))
             cb_crit.bind("<FocusIn>", lambda _: self._show_info("dt_crit"))
 
